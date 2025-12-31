@@ -11,7 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Log as LogFacade;
 
 class SendLowStockNotification implements ShouldQueue
 {
@@ -26,27 +26,36 @@ class SendLowStockNotification implements ShouldQueue
 
     public function handle(): void
     {
-        Log::channel('low_stock')->info('📧 Processing low stock notification email', [
-            'product_id' => $this->product->id,
-            'product_name' => $this->product->name,
-            'current_stock' => $this->product->stock_quantity,
-            'timestamp' => now(),
-        ]);
-
-        $admin = User::where('email', 'admin@ecommerce.test')->first();
-
-        if ($admin) {
-            Mail::to($admin->email)->send(new LowStockNotification($this->product));
-
-            Log::channel('low_stock')->info('✅ Low stock notification email sent to ' . $admin->email, [
+        try {
+            LogFacade::channel('low_stock')->info('📧 Processing low stock notification email', [
                 'product_id' => $this->product->id,
                 'product_name' => $this->product->name,
+                'current_stock' => $this->product->stock_quantity,
                 'timestamp' => now(),
             ]);
-        } else {
-            Log::channel('low_stock')->error('❌ Admin user not found', [
-                'timestamp' => now(),
+
+            $admin = User::where('email', 'admin@ecommerce.test')->first();
+
+            if ($admin) {
+                Mail::to($admin->email)->send(new LowStockNotification($this->product));
+
+                LogFacade::channel('low_stock')->info('✅ Low stock notification email sent to ' . $admin->email, [
+                    'product_id' => $this->product->id,
+                    'product_name' => $this->product->name,
+                    'timestamp' => now(),
+                ]);
+            } else {
+                LogFacade::channel('low_stock')->error('❌ Admin user not found', [
+                    'timestamp' => now(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            LogFacade::channel('low_stock')->error('Exception processing low stock notification', [
+                'message' => $e->getMessage(),
+                'exception' => \get_class($e),
+                'trace' => $e->getTraceAsString(),
             ]);
+            throw $e;
         }
     }
 }

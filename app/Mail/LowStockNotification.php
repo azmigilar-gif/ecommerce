@@ -10,7 +10,7 @@ use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Log as LogFacade;
 
 class LowStockNotification extends Mailable implements ShouldQueue
 {
@@ -44,7 +44,7 @@ class LowStockNotification extends Mailable implements ShouldQueue
 
     public function sent($message)
     {
-        Log::channel('low_stock')->info('Low stock notification email sent', [
+        LogFacade::channel('low_stock')->info('Low stock notification email sent', [
             'timestamp' => now(),
             'product_id' => $this->product->id,
             'product_name' => $this->product->name,

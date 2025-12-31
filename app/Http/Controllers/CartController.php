@@ -8,7 +8,7 @@ use App\Jobs\SendLowStockNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Log as LogFacade;
 use Inertia\Inertia;
 
 class CartController extends Controller
@@ -73,6 +73,13 @@ class CartController extends Controller
 
                 // Check if stock is low after deduction
                 if ($product->stock_quantity <= 10 && $product->stock_quantity >= 0) {
+                    LogFacade::channel('low_stock')->warning('⚠️ LOW STOCK ALERT', [
+                        'product_id' => $product->id,
+                        'product_name' => $product->name,
+                        'current_stock' => $product->stock_quantity,
+                        'timestamp' => now(),
+                    ]);
+
                     SendLowStockNotification::dispatch($product);
                 }
 
