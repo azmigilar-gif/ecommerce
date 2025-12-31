@@ -130,7 +130,7 @@ class CartController extends Controller
             }
             // Deduct additional stock
             $product->decrement('stock_quantity', $quantityDifference);
-        } 
+        }
         // If quantity decreased, restore the stock
         elseif ($quantityDifference < 0) {
             $product->increment('stock_quantity', abs($quantityDifference));
